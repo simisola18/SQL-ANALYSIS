@@ -1,0 +1,129 @@
+select * from ops$yyang00.theatre;
+select * from ops$yyang00.production;
+select * from ops$yyang00.performance;
+select * from ops$yyang00.client;
+select * from ops$yyang00.ticketpurchase;
+
+desc ops$yyang00.theatre;
+desc ops$yyang00.production;
+desc ops$yyang00.performance;
+desc ops$yyang00.client;
+desc ops$yyang00.ticketpurchase;
+
+create table P2686827_DmTheatre(Theatre_id number(5) primary key, Theatre# number(6) not null, Name varchar2(25) not null);
+create table P2686827_DmProduction(Prod_id number (5) primary key, P# number (5) not null, Title varchar2 (25) not null);
+create table P2686827_DmClient(Client_id number (5) primary key, Client# number (5) not null, Title varchar2 (25), Name varchar2(35) not null);
+create table P2686827_DmTime(Time_id number (5) primary key, Year number (4) not null, Month number (2) not null);
+create table P2686827_FactTable(
+  Theatre_id number(5) CONSTRAINT fk10 REFERENCES P2686827_DmTheatre,
+    Prod_id number(5) CONSTRAINT fk11 REFERENCES P2686827_DmProduction,
+    Client_id number(5) CONSTRAINT fk12 REFERENCES P2686827_DmClient,
+    Time_id  number(5) CONSTRAINT fk13 REFERENCES P2686827_DmTime,
+    TotalSale number(25,2) not null,
+    CONSTRAINT pk14 primary key (Theatre_id,Prod_id,Client_id,Time_id));
+    
+    
+    desc P2686827_DmTheatre;
+    desc P2686827_DmProduction;
+    desc P2686827_DmClient;
+    desc P2686827_DmTime;
+    desc P2686827_FactTable;
+    
+ CREATE SEQUENCE  P2686827_DmTheatre_seq
+ START WITH     1
+ INCREMENT BY   1
+ NOCACHE
+ NOCYCLE;
+ 
+ CREATE SEQUENCE  P2686827_DmProduction_seq
+ START WITH     1
+ INCREMENT BY   1
+ NOCACHE
+ NOCYCLE;
+ 
+ CREATE SEQUENCE  P2686827_DmClient_seq
+ START WITH     1
+ INCREMENT BY   1
+ NOCACHE
+ NOCYCLE;
+ 
+ CREATE SEQUENCE  P2686827_DmTime_seq
+ START WITH     1
+ INCREMENT BY   1
+ NOCACHE
+ NOCYCLE;
+ 
+ insert into P2686827_DmTheatre select P2686827_DmTheatre_seq.nextval, Theatre#, Name from 
+ (select distinct Theatre#, upper(trim(Name)) Name
+ from
+ (select thtr.Theatre#, thtr.Name
+ from ops$yyang00.theatre thtr, ops$yyang00.performance perf, ops$yyang00.ticketpurchase tpur where thtr.Theatre#=perf.Theatre# and perf.Per#=tpur.Per#));
+
+
+ insert into P2686827_DmProduction select P2686827_DmProduction_seq.nextval, P#, Title from 
+ (select distinct P#, upper(trim(Title)) Title
+ from
+ (select prod.P#, prod.Title
+ from ops$yyang00.production prod, ops$yyang00.performance perf, ops$yyang00.ticketpurchase tpur where prod.P#=perf.P# and perf.Per#=tpur.Per#));
+ 
+
+ insert into P2686827_DmClient select P2686827_DmClient_seq.nextval, Client#, Title, Name from 
+ (select distinct Client#, upper(trim(Title)) Title, upper(trim(Name)) Name
+ from
+ (select cln.Client#, cln.Title, cln.Name
+ from ops$yyang00.client cln, ops$yyang00.ticketpurchase tpur where cln.Client#=tpur.Client#));
+ 
+ 
+ insert into P2686827_DmTime select P2686827_DmTime_seq.nextval, Year, Month from 
+ (select distinct extract(Year from Pdate) Year, extract(Month from Pdate) Month
+ from ops$yyang00.performance);
+ 
+ 
+ insert into P2686827_FactTable select Theatre_id, Prod_id, Client_id, Time_id, TotalSale 
+ from
+ (select pdmth.Theatre_id, pdmpd.Prod_id, pdmcln.Client_id, pdmt.Time_id, sum(TotalAmount) TotalSale
+ from 
+ ops$yyang00.performance perf, ops$yyang00.ticketpurchase tpur, 
+ P2686827_DmTheatre pdmth, P2686827_DmProduction pdmpd, P2686827_DmClient pdmcln, P2686827_DmTime pdmt
+ where
+ pdmth.Theatre#=perf.Theatre# and perf.Per#=tpur.Per# and pdmpd.P#=perf.P# and pdmcln.Client#=tpur.Client#
+ and
+ extract(Year from perf.Pdate)=pdmt.Year and extract(Month from perf.Pdate)=pdmt.Month
+ group by pdmth.Theatre_id, pdmpd.Prod_id, pdmcln.Client_id, pdmt.Time_id);
+
+
+ 
+ select * from P2686827_DmTheatre;
+ select * from P2686827_DmProduction;
+ select * from P2686827_DmClient;
+ select * from P2686827_DmTime;
+ select * from P2686827_FactTable;
+ 
+ QUESTION 5(1)
+ select prod.P#, prod.title, sum(TotalAmount)
+from ops$yyang00.ticketPurchase tpur, ops$yyang00.production prod, ops$yyang00.performance perf
+where prod.P#=perf.p# and perf.per#=tpur.per#
+group by prod.P#, prod.title
+order by prod.title asc;
+
+select pdmpd.Prod_id, pdmpd.Title, sum(TotalSale)
+from  P2686827_DmProduction pdmpd,  P2686827_FactTable pfth
+where pdmpd.Prod_id=pfth.Prod_id
+group by  pdmpd.Prod_id, pdmpd.Title
+order by pdmpd.Title asc;
+
+
+QUESTION 5(2)
+select thtr.Theatre#, thtr.Name,extract(Year from Pdate),extract(Month from Pdate), sum(totalamount)
+from ops$yyang00.ticketPurchase tpur, ops$yyang00.performance perf,  ops$yyang00.theatre thtr
+where thtr.theatre#=perf.theatre# and perf.per#=tpur.per#
+group by thtr.Theatre#, thtr.Name, extract(Year from Pdate),extract(Month from Pdate)
+order by thtr.Name asc;
+
+select pdmth.Theatre_id, pdmth.Name, pdmt.Year, pdmt.Month, sum(TotalSale)
+from  P2686827_DmTime pdmt,  P2686827_FactTable pfth, P2686827_DmTheatre pdmth
+where pdmth.Theatre_id=pfth.Theatre_id and  pdmt.Time_id=pfth.Time_id
+group by pdmth.Theatre_id, pdmth.Name, pdmt.Year, pdmt.Month
+order by pdmth.Name asc;
+
+
