@@ -14,7 +14,7 @@ P2686827_DmTime for Time
 P2686827_FactTable for Fact
 b.	Why their attributes are chosen ANS: Based on the business analysis requirements, the attributes below from the star schema above are those needed in answering the 3 business questions given.
 c.	What is the granularity   ANS: The granularity which is the resolution of our data for each row in the fact table, it represents the total sale amount of one client for one theatre for one production in a month. The grains are Each client, Each theatre, Each production and Each month.
-<img width="125" alt="image" src="https://github.com/user-attachments/assets/75110f48-2e43-46bd-aba6-16c2b8536d95" />
+![image](https://github.com/user-attachments/assets/c5159bcc-c177-44e5-ad6a-023b744ffe97)
 
 # 2.	Derivation of logical relations
 2.1	A list of logical relations: 
